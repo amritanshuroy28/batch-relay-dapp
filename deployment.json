@@ -1,17 +1,17 @@
 {
-  "timestamp": "2026-02-14T20:24:26.073Z",
+  "timestamp": "2026-02-14T20:59:24.054Z",
   "network": "sepolia",
   "deployer": "0x0940bE8339fbC1007f417F5Cc69139feB0715155",
   "contracts": {
     "BatchExecutor": {
-      "address": "0xf1f0d57a5EA38627dcDa27bA0557988866170862"
+      "address": "0xF12fd8E8dD6D30b0117BA312e410bf6c4fBE98d4"
     },
     "SampleToken": {
-      "address": "0x4cC232F1bacC60f81288AE1B1202F46AA1e37F15",
-      "trustForwarder": "0xf1f0d57a5EA38627dcDa27bA0557988866170862"
+      "address": "0xE03Dff59B6DAe6F9Bae1Ce502e16B7eBab617916",
+      "trustForwarder": "0xF12fd8E8dD6D30b0117BA312e410bf6c4fBE98d4"
     },
     "GasSponsor": {
-      "address": "0xE0B5356288De0B086a9f9AD530E81f23bE4c4133",
+      "address": "0xDc2B8BF94967Aff4BbD23DE113Bf798F2a6CE5f8",
       "limits": {
         "maxPerClaim": "0.05 ETH",
         "dailyLimitPerRelayer": "1.0 ETH",
