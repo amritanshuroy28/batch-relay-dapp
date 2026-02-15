@@ -16,7 +16,7 @@ const BATCH_EXECUTOR_ABI = [
 ];
 
 const GAS_SPONSOR_ABI = [
-    "function claim(uint256 amount) external",
+    "function claim(uint256 amount, address[] calldata users) external",
     "function getBalance() external view returns (uint256)"
 ];
 
@@ -119,13 +119,16 @@ class Relayer {
             console.log(`Transaction confirmed in block ${receipt.blockNumber}`);
             console.log(`Actual gas used: ${receipt.gasUsed.toString()}`);
 
-            // Calculate cost
-            const gasCost = receipt.gasUsed * receipt.gasPrice;
+            // Calculate cost - need to get gas price from the transaction
+            const txDetails = await this.provider.getTransaction(tx.hash);
+            const gasCost = receipt.gasUsed * (txDetails.gasPrice || tx.gasPrice || 0n);
             console.log(`Gas cost: ${ethers.formatEther(gasCost)} ETH`);
 
             // Optionally claim reimbursement from GasSponsor
             if (this.gasSponsor) {
-                await this.claimReimbursement(gasCost);
+                // Extract user addresses from the batch
+                const users = requests.map(req => req.from);
+                await this.claimReimbursement(gasCost, users);
             }
 
             return {
@@ -147,13 +150,13 @@ class Relayer {
     /**
      * Claim gas reimbursement from the GasSponsor contract.
      */
-    async claimReimbursement(gasCost) {
+    async claimReimbursement(gasCost, users) {
         try {
             const poolBalance = await this.gasSponsor.getBalance();
             console.log(`GasSponsor pool balance: ${ethers.formatEther(poolBalance)} ETH`);
 
             if (poolBalance >= gasCost) {
-                const claimTx = await this.gasSponsor.claim(gasCost);
+                const claimTx = await this.gasSponsor.claim(gasCost, users);
                 await claimTx.wait();
                 console.log(`Reimbursed: ${ethers.formatEther(gasCost)} ETH`);
             } else {
