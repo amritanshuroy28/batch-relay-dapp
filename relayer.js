@@ -121,13 +121,27 @@ class Relayer {
 
             // Calculate cost - need to get gas price from the transaction
             const txDetails = await this.provider.getTransaction(tx.hash);
-            const gasCost = receipt.gasUsed * (txDetails.gasPrice || tx.gasPrice || 0n);
+            const gasPrice = txDetails.gasPrice || tx.gasPrice;
+            
+            if (!gasPrice) {
+                console.warn("⚠️  Warning: Could not determine gas price, skipping reimbursement");
+                return {
+                    status: "executed",
+                    txHash: tx.hash,
+                    blockNumber: receipt.blockNumber,
+                    gasUsed: receipt.gasUsed.toString(),
+                    batchSize: requests.length,
+                    warning: "Gas price unavailable, reimbursement skipped"
+                };
+            }
+            
+            const gasCost = receipt.gasUsed * gasPrice;
             console.log(`Gas cost: ${ethers.formatEther(gasCost)} ETH`);
 
             // Optionally claim reimbursement from GasSponsor
             if (this.gasSponsor) {
-                // Extract user addresses from the batch
-                const users = requests.map(req => req.from);
+                // Extract unique user addresses from the batch (deduplicate)
+                const users = [...new Set(requests.map(req => req.from))];
                 await this.claimReimbursement(gasCost, users);
             }
 
