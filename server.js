@@ -54,7 +54,7 @@ app.get("/health", (req, res) => {
 });
 
 // API endpoint to submit a signed request to the relayer
-app.post("/api/relay", (req, res) => {
+app.post("/api/relay", async (req, res) => {
     if (!relayer) {
         return res.status(503).json({
             error: "Relayer not configured. Check environment variables."
@@ -71,10 +71,10 @@ app.post("/api/relay", (req, res) => {
         }
 
         // Add the signed request to the relayer queue
-        relayer.addRequest(request, signature);
+        const result = await relayer.addRequest(request, signature);
 
         res.json({
-            status: "queued",
+            status: result.status || "queued",
             queueLength: relayer.pendingRequests.length,
             message: "Request added to batch queue"
         });
