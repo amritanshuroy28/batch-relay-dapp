@@ -1,102 +1,339 @@
-# Gas-Optimized Batch Transaction Relay
+# Gas Fee Optimizer & Batch Transaction System
 
-A complete dApp for batching Ethereum transactions to save gas, with optional gas sponsorship pool support.
+> A complete decentralized application demonstrating gas optimization through **transaction batching**, **EIP-712 meta-transactions**, and **sponsorship pool mechanisms** on the Ethereum Sepolia testnet.
 
-## 🎯 Live Deployment (Sepolia Testnet)
+**Built for [Web3Assam](https://web3assam.com/) Hackathon** — Driving blockchain education and adoption across Northeast India.
 
-| Component | Address |
-|-----------|---------|
-| **BatchExecutor Contract** | [`0xf1f0d57a5EA38627dcDa27bA0557988866170862`](https://sepolia.etherscan.io/address/0xf1f0d57a5EA38627dcDa27bA0557988866170862) |
-| **SampleToken (ERC-20)** | [`0x4cC232F1bacC60f81288AE1B1202F46AA1e37F15`](https://sepolia.etherscan.io/address/0x4cC232F1bacC60f81288AE1B1202F46AA1e37F15) |
-| **GasSponsor Pool** | [`0xE0B5356288De0B086a9f9AD530E81f23bE4c4133`](https://sepolia.etherscan.io/address/0xE0B5356288De0B086a9f9AD530E81f23bE4c4133) |
+---
 
-**Server**: http://localhost:3000 (run `npm start`)
+## Table of Contents
 
-## 🎯 What This Does
+- [Problem Statement](#problem-statement)
+- [Solution Overview](#solution-overview)
+- [System Architecture](#system-architecture)
+- [Smart Contracts](#smart-contracts)
+- [Meta-Transaction Support](#meta-transaction-support)
+- [Gas Sponsorship Logic](#gas-sponsorship-logic)
+- [Frontend Interface](#frontend-interface)
+- [Gas Savings Analysis](#gas-savings-analysis)
+- [Security Model](#security-model)
+- [Setup & Deployment](#setup--deployment)
+- [Testing & Validation](#testing--validation)
+- [Assumptions & Limitations](#assumptions--limitations)
+- [File Structure](#file-structure)
+- [References](#references)
 
-- **Batch Transactions**: Bundle multiple transactions into one on-chain call (~70% gas savings)
-- **Meta-Transactions**: Users don't need to hold ETH for gas
-- **Gas Sponsorship**: Optional pool to subsidize gas costs for users
-- **EIP-712 Signatures**: Standard, secure off-chain transaction signing
+---
 
-## 📦 What You've Got
+## Problem Statement
 
-### Smart Contracts (in `contracts/`)
-1. **BatchExecutor**
-   - Validates signatures (EIP-712)
-   - Executes batched transactions
-   - Tracks nonces for replay protection
+Ethereum transactions require users to pay gas fees for every on-chain action. In applications with frequent or multi-step interactions, this creates:
 
-2. **GasSponsor**
-   - Manages gas sponsorship pool
-   - Configurable daily limits (global, per-relayer, per-user)
-   - Emergency pause and withdrawal functions
+- **High costs** — Each transaction carries a 21,000 gas base overhead
+- **Poor UX** — Users must approve multiple MetaMask popups per workflow
+- **Onboarding friction** — New users must acquire native ETH before using any dApp
 
-3. **SampleToken**
-   - ERC-20 token for testing
-   - Supports meta-transaction awareness
-   - Mints 1M tokens to deployer
+This project addresses these issues by building a **Gas Fee Optimizer and Batch Transaction System** that combines:
 
-### Backend (Node.js)
-- **server.js** - Express server, serves dApp + endpoints
-- **relayer.js** - Batch collector and executor
-- **signer.js** - Off-chain transaction signer
+1. **Transaction Batching** — Amortize the 21,000 base gas cost across N operations
+2. **Meta-Transactions** — Users sign off-chain; relayers execute on-chain
+3. **Gas Sponsorship** — Optional full/partial subsidization of gas fees
 
-### Frontend
-- **index.html** - Web interface for users
+---
 
-## 🚀 Quick Start
+## Solution Overview
 
-### 1. Prerequisites
+```
+┌──────────────┐  EIP-712 Sign  ┌──────────────┐  Single TX    ┌─────────────────┐
+│  User Wallet │───(no gas)────▶│   Relayer    │──(batched)──▶│  BatchExecutor  │
+│  (MetaMask)  │                │   Server     │              │  (Smart Contract)│
+└──────────────┘                └──────┬───────┘              └────────┬────────┘
+                                       │ Reimburse                     │ Execute
+                                       ▼                               ▼
+                                ┌──────────────┐              ┌─────────────────┐
+                                │  GasSponsor  │              │  SampleToken    │
+                                │  (Pool)      │              │  (ERC-20)       │
+                                └──────────────┘              └─────────────────┘
+```
 
-You need:
-- Node.js v18+ (already installed ✓)
-- Sepolia testnet ETH (~0.1 ETH for deployment)
-- A private key (testnet-only!)
+**User pays: 0 gas.** The relayer handles execution, optionally reimbursed by the sponsor pool.
 
-### 2. Get Sepolia ETH
+---
 
-Visit https://sepoliafaucet.com and request test ETH
+## System Architecture
 
-### 3. Set Up Environment
+> Full architecture details: [`ARCHITECTURE.md`](ARCHITECTURE.md)
 
-Create `.env` file with:
+### Core Components
+
+| Component | Type | Role |
+|-----------|------|------|
+| **BatchExecutor** | Solidity Contract | Verifies EIP-712 signatures, tracks nonces, executes batched calls |
+| **GasSponsor** | Solidity Contract | Manages sponsorship pool with 6-layer constraint system |
+| **SampleToken** | Solidity Contract | Meta-tx-aware ERC-20 (trusted forwarder pattern) |
+| **Relayer** | Node.js Server | Queues signed requests, auto-flushes batches on timer |
+| **Frontend** | HTML/JS | Wallet connection, action builder, EIP-712 signing UI |
+
+### Design Patterns
+
+- **Trusted Forwarder (ERC-2771)** — BatchExecutor appends real sender to calldata
+- **EIP-712 Structured Data** — Human-readable, domain-bound signatures
+- **Nonce-Based Replay Protection** — Sequential per-user nonces
+- **Queue-and-Flush** — Time/size-triggered batch submission
+- **Defense-in-Depth Sponsorship** — 6 independent constraint layers
+
+### Transaction Flow
+
+1. **User connects** wallet (MetaMask on Sepolia)
+2. **User builds** N token transfer actions in the UI
+3. **User signs** each ForwardRequest via EIP-712 (no gas)
+4. **Relayer receives** signed requests via `POST /api/relay`
+5. **Relayer batches** requests and calls `executeBatch()` (one TX)
+6. **BatchExecutor verifies** each signature, checks nonces, executes calls
+7. **GasSponsor reimburses** relayer (if funded & within limits)
+
+---
+
+## Smart Contracts
+
+### BatchExecutor.sol ([source](contracts/BatchExecutor.sol))
+
+The core contract implementing batched meta-transaction execution.
+
+**Key Features:**
+- EIP-712 domain separator (chain + contract bound)
+- `verify(request, signature)` — On-chain signature verification
+- `executeBatch(requests[], signatures[])` — Single-TX batch execution
+- Sequential nonce tracking per user
+- Gas-isolated sub-calls with configurable limits
+- Sender identity propagation to target contracts
+
+**ForwardRequest Struct:**
+```solidity
+struct ForwardRequest {
+    address from;    // Original sender (user)
+    address to;      // Target contract
+    uint256 value;   // ETH to send (usually 0)
+    uint256 gas;     // Gas limit for this sub-call
+    uint256 nonce;   // User's sequential nonce
+    bytes data;      // Encoded function call
+}
+```
+
+### GasSponsor.sol ([source](contracts/GasSponsor.sol))
+
+Manages gas fee subsidization with multi-layer constraints.
+
+**Constraint Layers:**
+
+| Layer | Constraint | Purpose |
+|-------|-----------|---------|
+| 1 | `maxPerClaim` | Caps maximum single reimbursement |
+| 2 | `dailyLimitPerRelayer` | Prevents one relayer draining pool |
+| 3 | `dailyLimitPerUser` | Prevents Sybil-style abuse |
+| 4 | `globalDailyLimit` | Hard cap on total daily spending |
+| 5 | Balance check | Cannot reimburse more than pool holds |
+| 6 | Emergency pause | Owner can freeze all claims instantly |
+
+**Sponsorship Modes:**
+- **Full** — `maxPerClaim = 0.05 ETH` (onboarding campaigns)
+- **Partial** — `maxPerClaim = 0.005 ETH` (sustainable operations)
+- **None** — No GasSponsor deployed (relayer absorbs costs)
+
+### SampleToken.sol ([source](contracts/SampleToken.sol))
+
+Meta-transaction-aware ERC-20 implementing the trusted forwarder pattern.
+
+- Overrides `_msgSender()` to extract real sender from forwarded calls
+- Uses assembly for gas-efficient sender extraction
+- Mints 1M tokens to deployer for testing
+
+---
+
+## Meta-Transaction Support
+
+### How Off-Chain Signing Works
+
+1. User's browser constructs a `ForwardRequest` struct
+2. MetaMask's `eth_signTypedData_v4` is called with EIP-712 typed data
+3. Wallet shows human-readable signing UI (no gas, no TX)
+4. 65-byte signature is produced: `[r(32)][s(32)][v(1)]`
+5. Signature is sent to relayer over HTTP
+
+### On-Chain Execution
+
+```solidity
+// BatchExecutor verifies each signature:
+bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
+address signer = ecrecover(digest, v, r, s);
+require(signer == request.from && request.nonce == nonces[request.from]);
+
+// Then executes with sender identity appended:
+request.to.call{gas: request.gas}(abi.encodePacked(request.data, request.from));
+```
+
+### EIP-712 Domain
+
+```javascript
+{
+    name: "BatchExecutor",
+    version: "1",
+    chainId: 11155111,              // Sepolia
+    verifyingContract: "0x..."      // Deployed BatchExecutor address
+}
+```
+
+---
+
+## Gas Sponsorship Logic
+
+### Flow
+
+```
+Relayer executes batch → measures gas cost → calls GasSponsor.claim()
+                                              │
+                                              ├─ Cap: min(cost, maxPerClaim)
+                                              ├─ Check relayer daily limit
+                                              ├─ Check per-user daily limits
+                                              ├─ Check global daily limit
+                                              ├─ Check pool balance
+                                              └─ Transfer ETH to relayer
+```
+
+### Pre-Flight Check
+
+Relayers can call `estimateReimbursement()` (view function, no gas) before submitting a batch to verify the claim would succeed.
+
+### Admin Controls
+
+| Function | Access | Purpose |
+|----------|--------|---------|
+| `setRelayer(addr, bool)` | Owner | Whitelist/revoke relayers |
+| `setLimits(...)` | Owner | Update all constraint parameters |
+| `setPaused(bool)` | Owner | Emergency pause/unpause |
+| `emergencyWithdraw()` | Owner | Pull all funds immediately |
+| `transferOwnership(addr)` | Owner | Transfer admin control |
+
+---
+
+## Frontend Interface
+
+The single-page application (`index.html`) provides:
+
+1. **Wallet Connection** — MetaMask integration with network detection
+2. **Status Dashboard** — Real-time nonce, balance, and pending action counts
+3. **Action Builder** — Dynamic form to add/remove token transfers
+4. **Gas Estimation** — Live comparison of individual vs. batched costs
+5. **Signature Flow** — Step-by-step progress indicator
+6. **Activity Log** — Real-time logging of all operations
+7. **Savings Visualization** — Bar charts comparing gas costs
+8. **Architecture Diagram** — Interactive system architecture visualization
+9. **Gas Analysis Table** — Theoretical savings for various batch sizes
+10. **Security Model** — Trust guarantees and safety properties
+11. **Dark/Light Theme** — Persistent theme toggle
+
+---
+
+## Gas Savings Analysis
+
+### Theoretical Model
+
+Each Ethereum TX pays 21,000 gas base overhead. For a simple ERC-20 transfer (~31,000 gas execution):
+
+$$\text{Individual Cost} = N \times (21{,}000 + 31{,}000) = N \times 52{,}000 \text{ gas}$$
+
+$$\text{Batched Cost} = 21{,}000 + N \times (31{,}000 + 5{,}000_{\text{overhead}}) \approx 21{,}000 + N \times 15{,}600 \text{ gas}$$
+
+$$\text{Savings} = (N-1) \times 21{,}000 - N \times 5{,}000$$
+
+### Expected Results
+
+| Batch Size | Individual | Batched | Savings |
+|-----------|-----------|---------|---------|
+| 2 | 104,000 | 65,000 | **37.5%** |
+| 5 | 260,000 | 104,000 | **60.0%** |
+| 10 | 520,000 | 182,000 | **65.0%** |
+| 20 | 1,040,000 | 338,000 | **67.5%** |
+| 50 | 2,600,000 | 806,000 | **69.0%** |
+
+Savings asymptotically approach ~70% as batch size increases.
+
+---
+
+## Security Model
+
+### Trust Assumptions
+
+| Entity | Trust Boundary |
+|--------|---------------|
+| User | Trusts their wallet, EIP-712 standard. Does NOT trust relayer. |
+| BatchExecutor | Trusts cryptographic signatures. Does NOT trust relayer identity. |
+| Relayer | Trusts contract code. Validates all requests before queuing. |
+| GasSponsor | Trusts whitelisted relayers and owner. |
+
+### Attack Mitigations
+
+| Attack Vector | Mitigation |
+|--------------|-----------|
+| Replay (same chain) | Sequential per-user nonces |
+| Cross-chain replay | EIP-712 domain includes `chainId` |
+| Cross-contract replay | EIP-712 domain includes `verifyingContract` |
+| Relayer censorship | Users can execute directly on-chain |
+| Gas griefing | Per-call gas limits in `ForwardRequest` |
+| Sponsor pool drain | 6-layer constraint system |
+| Signature forgery | ECDSA + EIP-712 typed data |
+| Reentrancy | Nonce incremented before execution |
+| Malicious relayer | Can only execute pre-signed actions |
+
+---
+
+## Setup & Deployment
+
+### Prerequisites
+
+- Node.js v18+
+- Sepolia testnet ETH (~0.1 ETH) — Get from [sepoliafaucet.com](https://sepoliafaucet.com)
+- RPC URL — [Infura](https://infura.io), [Alchemy](https://alchemy.com), or [QuickNode](https://quicknode.com) (free tier)
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Environment
+
+Create `.env`:
 
 ```env
 SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
-DEPLOYER_PRIVATE_KEY=0x...
-ETHERSCAN_API_KEY=your_key  # optional
+DEPLOYER_PRIVATE_KEY=0xYOUR_TESTNET_PRIVATE_KEY
+ETHERSCAN_API_KEY=optional
+
+# Server config (auto-populated after deploy)
+RELAYER_PRIVATE_KEY=0xSAME_AS_DEPLOYER_FOR_TESTING
+PORT=3000
+MAX_BATCH_SIZE=10
+BATCH_INTERVAL_MS=15000
 ```
 
-Get RPC URL from:
-- Infura: https://infura.io (free tier)
-- Alchemy: https://alchemy.com
-- Quicknode: https://quicknode.com
-
-### 4. Deploy Contracts
+### 3. Compile Contracts
 
 ```bash
-# Compile contracts
 npm run compile
-
-# Deploy to Sepolia
-npm run deploy -- --network sepolia
 ```
 
-This will save contract addresses to `.env` and `deployment.json`
-
-### 5. Fund Gas Sponsor Pool
-
-Create a transaction to send ETH to the GasSponsor address:
+### 4. Deploy to Sepolia
 
 ```bash
-# Using MetaMask or Etherscan
-# Send 0.1-1 ETH to the address from deployment output
+npm run deploy
 ```
 
-### 6. Update Frontend Configuration
+This deploys all 3 contracts, whitelists the relayer, and updates `.env` and `deployment.json`.
 
-In `index.html`, update the CONFIG object with your deployed addresses:
+### 5. Update Frontend Config
+
+Edit `index.html` CONFIG object with deployed addresses:
 
 ```javascript
 const CONFIG = {
@@ -106,7 +343,7 @@ const CONFIG = {
 };
 ```
 
-### 7. Start Server
+### 6. Start Server
 
 ```bash
 npm start
@@ -114,234 +351,111 @@ npm start
 
 Open http://localhost:3000
 
-## 🛠️ Development Commands
+---
+
+## Testing & Validation
+
+### Run the Test Suite
 
 ```bash
-npm run compile          # Compile Solidity contracts
-npm run deploy           # Deploy to Sepolia
-npm run deploy:helper    # Interactive deployment wizard
-npm start                # Start server
-npm run dev              # Start server (same as start)
+npx hardhat run test/gas-benchmark.js --network sepolia
 ```
 
-## 📝 File Structure
+The test suite validates:
 
-```
-newdApp/
-├── contracts/                      # Solidity smart contracts
-│   ├── BatchExecutor.sol           # Main batching logic
-│   ├── GasSponsor.sol              # Gas sponsorship pool
-│   └── SampleToken.sol             # Test ERC-20 token
-├── scripts/
-│   └── deploy.js                   # Hardhat deployment script
-├── artifacts/                      # Compiled contracts (generated)
-├── server.js                       # Express server
-├── relayer.js                      # Relayer batch logic
-├── signer.js                       # Transaction signer utility
-├── index.html                      # Web frontend
-├── hardhat.config.js               # Hardhat configuration
-├── deploy-helper.js                # Interactive deploy wizard
-├── package.json                    # Dependencies
-├── .env                            # Environment variables (create this)
-└── DEPLOYMENT.md                   # Detailed deployment guide
-```
+1. **Signature Verification** — EIP-712 signatures verified on-chain; wrong signer rejected
+2. **Nonce Replay Protection** — Executed request cannot be replayed; nonce increments
+3. **Batch Execution** — N transfers executed in single TX with measured gas savings
+4. **Gas Sponsorship** — Deposit, estimate, claim, and daily limit tracking
+5. **Multi-Size Benchmark** — Gas comparison for batch sizes 2, 5, 10
+6. **Failure Handling** — Empty batch, mismatched arrays, wrong nonce all revert correctly
 
-## 🔑 Key Concepts
-
-### Batching
-Users sign multiple transaction requests off-chain. The relayer collects them and submits all at once:
-
-```
-Single txs:  5 calls × 21,000 gas each = 105,000 gas
-Batched:     1 call with 5 txs = ~31,500 gas
-Savings:     70% gas reduction
-```
-
-### Meta-Transactions
-1. User signs transaction off-chain (no gas needed)
-2. Relayer submits signed transactions
-3. Smart contract verifies signature
-4. Only relayer pays gas (can be reimbursed by pool)
-
-### EIP-712 Signatures
-Standard Ethereum signature format where users sign:
-```solidity
-struct ForwardRequest {
-    address from;      // User's address
-    address to;        // Contract to call
-    uint256 value;     // ETH to send
-    uint256 gas;       // Gas for this tx
-    uint256 nonce;     // Replay protection
-    bytes data;        // Encoded function call
-}
-```
-
-## 💻 How It Works (Example)
-
-1. **User prepares 3 token transfers**
-   ```javascript
-   const requests = [
-       { from: user1, to: token, data: transfer(user2, 100) },
-       { from: user2, to: token, data: transfer(user3, 50) },
-       { from: user3, to: token, data: transfer(user1, 75) },
-   ];
-   ```
-
-2. **User signs each request**
-   ```javascript
-   const signatures = await Promise.all(
-       requests.map(req => sign(req))
-   );
-   ```
-
-3. **Send to relayer API**
-   ```javascript
-   await fetch("/api/relay", {
-       method: "POST",
-       body: JSON.stringify({ request: requests[0], signature: signatures[0] })
-   });
-   ```
-
-4. **Relayer batches them**
-   - Collects requests over 15 seconds (configurable)
-   - Verifies each signature
-   - Groups into batch
-
-5. **Relayer submits batch**
-   ```javascript
-   await batchExecutor.executeBatch(requests, signatures);
-   ```
-
-6. **Gas reimbursement** (if GasSponsor has funds)
-   - Relayer's gas cost calculated
-   - Sponsor pool reimburses relayer
-   - User benefits from subsidy
-
-## ⚙️ Gas Sponsor Configuration
-
-Default limits (edit in `scripts/deploy.js` before deployment):
-
-```javascript
-const limits = {
-    maxPerClaim: 0.05 ETH,           // Max per batch
-    dailyLimitPerRelayer: 1 ETH,     // Relayer daily limit
-    dailyLimitPerUser: 0.01 ETH,     // Per-address limit
-    globalDailyLimit: 5 ETH          // Total daily limit
-};
-```
-
-### Admin Functions (Owner Only)
-
-```solidity
-setRelayer(address, bool)           // Whitelist/blacklist relayer
-setLimits(max, relayerDaily, userDaily, globalDaily)
-setPaused(bool)                     // Emergency pause
-emergencyWithdraw()                 // Withdraw all funds
-```
-
-## 🔒 Security
-
-✅ **What's Protected**
-- EIP-712 signature verification
-- Nonce tracking (replay protection)
-- Chain-ID binding (no cross-chain attacks)
-- Configurable limits (no pool draining)
-- Owner pause function (emergency stop)
-
-⚠️ **What to Remember**
-- Never use mainnet private keys during testing
-- Test thoroughly on Sepolia first
-- Review contract code before deployment
-- Use reasonable gas sponsor limits
-- Monitor sponsorship pool balance
-
-## 🧪 Testing
-
-### Test on Sepolia
-1. Deploy contracts (see above)
-2. Fund GasSponsor with ETH
-3. Open http://localhost:3000
-4. Connect MetaMask to Sepolia
-5. Try batch transfers
-6. Watch gas savings in transaction explorer
-
-### Monitor Transactions
-- View batches on Etherscan: https://sepolia.etherscan.io
-- Check server logs for batch submissions
-- Track relayer's address in explorer
-
-## 📊 Expected Gas Savings
-
-| Scenario | Traditional | Batched | Savings |
-|----------|-----------|---------|---------|
-| 5 token transfers | 105,000 gas | 31,500 gas | 70% |
-| 10 transfers | 210,000 gas | 62,000 gas | 70% |
-| 20 transfers | 420,000 gas | 120,000 gas | 71% |
-
-*Actual savings depend on calldata size and storage operations*
-
-## 🐛 Troubleshooting
-
-### Deployment fails
-```bash
-# Check you have Sepolia ETH
-# Verify RPC URL works
-# Check gas price isn't too high
-```
-
-### Contracts won't compile
-```bash
-rm -rf artifacts hardhat_cache
-npm run compile
-```
-
-### Server won't start
-```bash
-# Port 3000 in use?
-netstat -ano | findstr :3000
-
-# Check environment variables
-cat .env
-```
-
-### Relayer not batching
-```bash
-# Check server logs
-# Verify contract addresses in .env
-# Ensure GasSponsor has ETH (check balance)
-```
-
-## 📚 Learn More
-
-### Solidity
-- Read inline comments in contracts
-- Standard OpenZeppelin ERC-20 patterns
-
-### Hardhat
-- https://hardhat.org/docs
-
-### Ethers.js
-- https://docs.ethers.org/v6/
-
-### EIP-712
-- https://eips.ethereum.org/EIPS/eip-712
-
-## 📄 License
-
-MIT
-
-## Support Files
-
-- **DEPLOYMENT.md** - Detailed deployment steps
-- **deployment.json** - Contract addresses after deployment
-- **artifacts/** - Compiled contract ABIs and bytecode
+Results are saved to `test-results.json`.
 
 ---
 
-**Ready to deploy?**
+## Assumptions & Limitations
 
-```bash
-node deploy-helper.js
+### Assumptions
+
+- Users have MetaMask installed and configured for Sepolia
+- Relayer has sufficient Sepolia ETH to pay gas upfront
+- GasSponsor pool is funded before reimbursement claims
+- Network gas prices are within reasonable testnet ranges
+- Single relayer model (no multi-relayer coordination)
+
+### Limitations
+
+1. **Sequential nonces** — If a user's request at nonce N fails verification, all subsequent requests (N+1, N+2...) are blocked until nonce N is consumed
+2. **Single relayer** — No multi-relayer coordination or failover (would need relayer registry and nonce reservation)
+3. **Testnet only** — Not audited for mainnet deployment; uses simplified patterns
+4. **Token-specific** — SampleToken must be deployed with BatchExecutor as trusted forwarder; existing tokens need wrapper contracts
+5. **Gas estimation** — Theoretical savings assume uniform ERC-20 transfers; actual savings vary with calldata complexity
+6. **MEV exposure** — Batch transactions on mainnet could be sandwich-attacked; needs private mempool or Flashbots integration
+7. **Day-based resets** — GasSponsor daily limits use `block.timestamp / 1 days`, which can vary ±15 seconds
+
+### Future Improvements
+
+- Multi-relayer support with nonce reservations
+- L2 deployment (Arbitrum, Optimism) for further gas savings
+- Session keys for one-click batch signing
+- ERC-4337 Account Abstraction integration
+- Private mempool submission for MEV protection
+
+---
+
+## File Structure
+
+```
+newdApp/
+├── contracts/                     # Solidity smart contracts
+│   ├── BatchExecutor.sol          # Core: EIP-712 verification & batch execution
+│   ├── GasSponsor.sol             # Gas sponsorship pool with constraints
+│   └── SampleToken.sol            # Meta-tx-aware ERC-20 token
+├── scripts/
+│   └── deploy-v2.js               # Hardhat deployment script
+├── test/
+│   └── gas-benchmark.js           # Test suite & gas benchmarking
+├── artifacts/                     # Compiled contract ABIs (generated)
+├── server.js                      # Express server (frontend + API)
+├── relayer.js                     # Batch queue & execution engine
+├── signer.js                      # EIP-712 signing utilities
+├── index.html                     # Full frontend application
+├── hardhat.config.js              # Hardhat configuration
+├── package.json                   # Dependencies
+├── deployment.json                # Deployed contract addresses
+├── ARCHITECTURE.md                # Detailed system architecture design
+├── DEPLOYMENT.md                  # Step-by-step deployment guide
+├── SETUP.md                       # Setup verification checklist
+└── README.md                      # This file
 ```
 
-This will guide you through the entire process! 🚀
+---
+
+## Live Deployment (Sepolia Testnet)
+
+| Contract | Address |
+|----------|---------|
+| **BatchExecutor** | [`0xF12fd8E8dD6D30b0117BA312e410bf6c4fBE98d4`](https://sepolia.etherscan.io/address/0xF12fd8E8dD6D30b0117BA312e410bf6c4fBE98d4) |
+| **SampleToken** | [`0xE03Dff59B6DAe6F9Bae1Ce502e16B7eBab617916`](https://sepolia.etherscan.io/address/0xE03Dff59B6DAe6F9Bae1Ce502e16B7eBab617916) |
+| **GasSponsor** | [`0xDc2B8BF94967Aff4BbD23DE113Bf798F2a6CE5f8`](https://sepolia.etherscan.io/address/0xDc2B8BF94967Aff4BbD23DE113Bf798F2a6CE5f8) |
+
+**Local Server:** `npm start` → http://localhost:3000
+
+---
+
+## References
+
+1. [EIP-712: Typed Structured Data Hashing and Signing](https://eips.ethereum.org/EIPS/eip-712)
+2. [ERC-2771: Secure Protocol for Native Meta Transactions](https://eips.ethereum.org/EIPS/eip-2771)
+3. [EIP-2028: Transaction Data Gas Cost Reduction](https://eips.ethereum.org/EIPS/eip-2028)
+4. [ERC-4337: Account Abstraction Using Alt Mempool](https://eips.ethereum.org/EIPS/eip-4337)
+5. [OpenZeppelin MinimalForwarder](https://docs.openzeppelin.com/contracts/4.x/api/metatx)
+6. [Gas Station Network (GSN)](https://docs.opengsn.org/)
+7. [Ethereum Yellow Paper — Transaction Execution](https://ethereum.github.io/yellowpaper/paper.pdf)
+
+---
+
+## License
+
+MIT

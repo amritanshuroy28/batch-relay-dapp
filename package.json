@@ -10,7 +10,9 @@
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy-v2.js --network sepolia",
     "deploy:helper": "node deploy-helper.js",
-    "deploy:local": "hardhat run scripts/deploy.js --network localhost"
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "test": "hardhat run test/gas-benchmark.js --network sepolia",
+    "test:local": "hardhat run test/gas-benchmark.js --network localhost"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.4",

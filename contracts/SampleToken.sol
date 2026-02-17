@@ -5,9 +5,25 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title SampleToken
- * @notice A simple ERC-20 token for testing batch transfers.
- *         Supports meta-transaction awareness (recognizes the
- *         original sender appended by BatchExecutor).
+ * @author Gas Fee Optimizer — Batch Transaction System
+ * @notice A meta-transaction-aware ERC-20 token for demonstrating gas-optimized
+ *         batch transfers via the BatchExecutor trusted forwarder.
+ *
+ * @dev Implements the Trusted Forwarder pattern (ERC-2771 inspired):
+ *   - When called directly by a user → standard ERC-20 behavior
+ *   - When called via BatchExecutor → extracts real sender from calldata
+ *
+ * SENDER PROPAGATION:
+ *   BatchExecutor appends the original sender address (20 bytes) to the end
+ *   of the calldata when forwarding calls. This contract's _msgSender()
+ *   override detects calls from the trusted forwarder and extracts the
+ *   real sender using assembly for gas efficiency.
+ *
+ *   calldata layout for forwarded calls:
+ *   [original function data][sender address (20 bytes)]
+ *
+ * This pattern allows any existing ERC-20 function (transfer, approve, etc.)
+ * to work seamlessly with both direct and relayed execution paths.
  */
 contract SampleToken is ERC20 {
 

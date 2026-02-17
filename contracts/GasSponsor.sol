@@ -3,18 +3,38 @@ pragma solidity ^0.8.20;
 
 /**
  * @title GasSponsor
- * @notice Manages a gas sponsorship pool with configurable constraints.
+ * @author Gas Fee Optimizer — Batch Transaction System
+ * @notice Manages a gas sponsorship pool with configurable multi-layer constraints,
+ *         enabling full or partial gas fee subsidization for meta-transaction users.
+ *
+ * @dev Implements a defense-in-depth approach to pool security with 6 constraint layers:
  *
  * SPONSORSHIP MODES:
- * 1. Full Sponsorship  — Relayer gets 100% of gas cost reimbursed
- * 2. Partial Sponsorship — Relayer gets up to a capped amount per claim
- * 
- * CONSTRAINTS:
- * - Per-claim maximum (prevents single huge claims)
- * - Per-relayer daily limit (prevents one relayer draining the pool)
- * - Per-user daily limit (prevents one user abusing the system)
- * - Global daily limit (caps total sponsorship spending per day)
- * - Emergency pause (owner can freeze all claims)
+ *   Mode 1 — Full Sponsorship:    Relayer gets 100% reimbursement (up to cap)
+ *            Use case: User onboarding, promotional campaigns
+ *   Mode 2 — Partial Sponsorship: Relayer gets up to maxPerClaim, absorbs the rest
+ *            Use case: Sustainable ongoing operations
+ *   Mode 3 — No Sponsorship:      GasSponsor not deployed; relayer absorbs all costs
+ *            Use case: Relayer funded by service fees
+ *
+ * CONSTRAINT LAYERS (defense-in-depth):
+ *   Layer 1: Per-Claim Cap        — Bounds maximum single reimbursement
+ *   Layer 2: Per-Relayer Daily     — Prevents one relayer from draining the pool
+ *   Layer 3: Per-User Daily        — Prevents Sybil-style abuse by single users
+ *   Layer 4: Global Daily          — Hard cap on total daily spending
+ *   Layer 5: Pool Balance Check    — Cannot reimburse more than the pool holds
+ *   Layer 6: Emergency Pause       — Owner can freeze all claims instantly
+ *
+ * ECONOMICS:
+ *   The pool acts as a shared public good. Any address can deposit ETH.
+ *   Only whitelisted relayers can claim reimbursement after executing batches.
+ *   Per-user costs are split equally among batch participants for fair accounting.
+ *
+ * SECURITY:
+ *   - Only whitelisted relayers can claim (setRelayer by owner)
+ *   - Day-based limit resets use block.timestamp / 1 days for gas efficiency
+ *   - estimateReimbursement() allows pre-checking without state changes
+ *   - emergencyWithdraw() provides a safety valve for compromised contracts
  */
 contract GasSponsor {
 

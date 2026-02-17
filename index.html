@@ -782,6 +782,268 @@
             margin-top: 0.5rem;
         }
 
+        /* ─── Architecture Diagram ─── */
+        .arch-diagram {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            overflow-x: auto;
+        }
+
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+
+        .arch-node {
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            text-align: center;
+            min-width: 140px;
+            transition: all 0.3s;
+        }
+
+        .arch-node:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 20px var(--accent-glow);
+            transform: translateY(-3px);
+        }
+
+        .arch-node-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .arch-node-title {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .arch-node-desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .arch-arrow {
+            font-size: 1.5rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .arch-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .arch-detail-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .arch-detail-card h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent);
+        }
+
+        .arch-detail-card p, .arch-detail-card li {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            font-family: var(--font-display);
+        }
+
+        .arch-detail-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .arch-detail-card li::before {
+            content: "→ ";
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ─── How It Works Steps ─── */
+        .how-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .how-step {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .how-step:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        .how-step-num {
+            position: absolute;
+            top: -12px;
+            left: 16px;
+            background: var(--accent);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        .how-step h4 {
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            margin-top: 0.25rem;
+        }
+
+        .how-step p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .how-step .gas-tag {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+
+        .gas-tag.free {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--green);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .gas-tag.paid {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--orange);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .gas-tag.sponsored {
+            background: rgba(76, 110, 245, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(76, 110, 245, 0.3);
+        }
+
+        /* ─── Gas Math Section ─── */
+        .gas-math {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .gas-math-title {
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .gas-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+
+        .gas-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .gas-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .gas-table tr:hover td {
+            color: var(--text-primary);
+            background: rgba(76, 110, 245, 0.05);
+        }
+
+        .gas-table .highlight {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        /* ─── Security Grid ─── */
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .security-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .security-icon {
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .security-item h5 {
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .security-item p {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
         /* ─── Footer ─── */
         .footer {
             border-top: 1px solid var(--border);
@@ -965,6 +1227,209 @@
         </div>
     </section>
 
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="section">
+        <div class="section-label" style="text-align: center;">Technical Deep Dive</div>
+        <h2 class="section-title">How It Works</h2>
+
+        <!-- Architecture Flow Diagram -->
+        <div class="arch-diagram">
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <span style="font-family: var(--font-display); font-size: 0.85rem; color: var(--text-primary); font-weight: 600;">System Architecture — End-to-End Transaction Flow</span>
+            </div>
+            <div class="arch-flow">
+                <div class="arch-node">
+                    <div class="arch-node-icon">👤</div>
+                    <div class="arch-node-title">User Wallet</div>
+                    <div class="arch-node-desc">Signs EIP-712 data<br>Zero gas cost</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <div class="arch-node-icon">📡</div>
+                    <div class="arch-node-title">Relayer Server</div>
+                    <div class="arch-node-desc">Queues & batches<br>requests off-chain</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <div class="arch-node-icon">📦</div>
+                    <div class="arch-node-title">BatchExecutor</div>
+                    <div class="arch-node-desc">Verifies sigs &<br>executes on-chain</div>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <div class="arch-node-icon">🪙</div>
+                    <div class="arch-node-title">Target Contract</div>
+                    <div class="arch-node-desc">ERC-20 transfers<br>with real sender</div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 0.5rem;">
+                <span style="font-size: 1.3rem; color: var(--green);">↑</span><br>
+                <div class="arch-node" style="display: inline-block; margin-top: 0.5rem; border-color: var(--green);">
+                    <div class="arch-node-icon">💰</div>
+                    <div class="arch-node-title">GasSponsor Pool</div>
+                    <div class="arch-node-desc">Reimburses relayer<br>with constraints</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step-by-Step Process -->
+        <div class="how-steps">
+            <div class="how-step">
+                <div class="how-step-num">1</div>
+                <h4>Connect Wallet</h4>
+                <p>User connects MetaMask to Sepolia testnet. The dApp reads their nonce and token balance from the blockchain.</p>
+                <span class="gas-tag free">Gas: 0 (read-only)</span>
+            </div>
+            <div class="how-step">
+                <div class="how-step-num">2</div>
+                <h4>Build Actions</h4>
+                <p>User defines N token transfers (recipient + amount). Actions are composed entirely in the browser — nothing touches the chain yet.</p>
+                <span class="gas-tag free">Gas: 0 (off-chain)</span>
+            </div>
+            <div class="how-step">
+                <div class="how-step-num">3</div>
+                <h4>Sign via EIP-712</h4>
+                <p>Each action is wrapped in a ForwardRequest struct and signed with EIP-712 typed data. MetaMask shows human-readable details. Signature binds to contract + chain.</p>
+                <span class="gas-tag free">Gas: 0 (signature only)</span>
+            </div>
+            <div class="how-step">
+                <div class="how-step-num">4</div>
+                <h4>Submit to Relayer</h4>
+                <p>Signed requests are sent to the relayer server via POST /api/relay. The relayer verifies each signature before queuing.</p>
+                <span class="gas-tag free">Gas: 0 (HTTP request)</span>
+            </div>
+            <div class="how-step">
+                <div class="how-step-num">5</div>
+                <h4>Batch Execution</h4>
+                <p>Relayer submits all requests in a single executeBatch() call. One base cost (21,000 gas) instead of N. Each sub-call verified and executed atomically.</p>
+                <span class="gas-tag paid">Gas: 21K + N×13K (relayer pays)</span>
+            </div>
+            <div class="how-step">
+                <div class="how-step-num">6</div>
+                <h4>Gas Reimbursement</h4>
+                <p>If a GasSponsor pool is funded, the relayer claims reimbursement. 6-layer constraint system prevents abuse (per-claim, per-user, per-relayer, global, balance, pause).</p>
+                <span class="gas-tag sponsored">Gas: Sponsored by pool</span>
+            </div>
+        </div>
+
+        <!-- Architecture Details -->
+        <div class="arch-detail-grid">
+            <div class="arch-detail-card">
+                <h4>🔐 EIP-712 Signature Scheme</h4>
+                <ul>
+                    <li>Domain separator binds to contract + chain ID</li>
+                    <li>Typed data hash prevents cross-contract replay</li>
+                    <li>ecrecover() verifies signer on-chain</li>
+                    <li>MetaMask renders human-readable signing UI</li>
+                </ul>
+            </div>
+            <div class="arch-detail-card">
+                <h4>🔄 Nonce-Based Replay Protection</h4>
+                <ul>
+                    <li>Sequential nonces per user (like Ethereum itself)</li>
+                    <li>Incremented before execution (reentrancy safe)</li>
+                    <li>Each request is unique: (chain, contract, nonce)</li>
+                    <li>Stale signatures automatically invalidated</li>
+                </ul>
+            </div>
+            <div class="arch-detail-card">
+                <h4>📦 Trusted Forwarder Pattern</h4>
+                <ul>
+                    <li>BatchExecutor appends real sender to calldata</li>
+                    <li>Target contract overrides _msgSender()</li>
+                    <li>Extracts last 20 bytes when called by forwarder</li>
+                    <li>Compatible with any ERC-20/ERC-721 contract</li>
+                </ul>
+            </div>
+            <div class="arch-detail-card">
+                <h4>💰 Sponsorship Constraint Layers</h4>
+                <ul>
+                    <li>Per-Claim Cap: Bounds maximum reimbursement</li>
+                    <li>Per-Relayer Daily: Prevents single-relayer drain</li>
+                    <li>Per-User Daily: Prevents Sybil abuse</li>
+                    <li>Global Daily + Balance + Pause: Safety nets</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Gas Savings Table -->
+        <div class="gas-math">
+            <div class="gas-math-title">📊 Gas Optimization Analysis</div>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; font-family: var(--font-display); line-height: 1.6;">
+                Every Ethereum transaction pays a <strong>21,000 gas base cost</strong>. Batching amortizes this across N operations.
+                For N token transfers, individual cost = N × 52,000 gas vs batched cost = 21,000 + N × ~15,600 gas.
+            </p>
+            <table class="gas-table">
+                <thead>
+                    <tr>
+                        <th>Batch Size</th>
+                        <th>Individual Cost</th>
+                        <th>Batched Cost</th>
+                        <th>Gas Saved</th>
+                        <th>Savings %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>2 transfers</td><td>104,000</td><td>65,000</td><td>39,000</td><td class="highlight">37.5%</td></tr>
+                    <tr><td>5 transfers</td><td>260,000</td><td>104,000</td><td>156,000</td><td class="highlight">60.0%</td></tr>
+                    <tr><td>10 transfers</td><td>520,000</td><td>182,000</td><td>338,000</td><td class="highlight">65.0%</td></tr>
+                    <tr><td>20 transfers</td><td>1,040,000</td><td>338,000</td><td>702,000</td><td class="highlight">67.5%</td></tr>
+                    <tr><td>50 transfers</td><td>2,600,000</td><td>806,000</td><td>1,794,000</td><td class="highlight">69.0%</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Security Section -->
+        <div style="margin-top: 3rem;">
+            <div class="section-label" style="text-align: center;">Trust Model</div>
+            <h3 style="text-align: center; font-size: 1.5rem; margin-bottom: 2rem;">Security & Trust Guarantees</h3>
+            <div class="security-grid">
+                <div class="security-item">
+                    <div class="security-icon">🛡️</div>
+                    <div>
+                        <h5>Replay Protection</h5>
+                        <p>Sequential nonces + EIP-712 domain binding (chainId + contract address) make every signature globally unique.</p>
+                    </div>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">🔑</div>
+                    <div>
+                        <h5>Non-Custodial</h5>
+                        <p>The relayer never holds user keys or funds. It can only execute exactly what the user signed — nothing more.</p>
+                    </div>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">🚫</div>
+                    <div>
+                        <h5>Anti-Griefing</h5>
+                        <p>Each sub-call has its own gas limit. One failing action cannot consume the entire batch's gas budget.</p>
+                    </div>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">🔄</div>
+                    <div>
+                        <h5>Censorship Resistant</h5>
+                        <p>If the relayer is down, users can call executeBatch() directly on the contract, paying their own gas.</p>
+                    </div>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">🏦</div>
+                    <div>
+                        <h5>Pool Safety</h5>
+                        <p>6-layer constraint system on GasSponsor prevents drain attacks even with compromised relayer keys.</p>
+                    </div>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">⏸️</div>
+                    <div>
+                        <h5>Emergency Controls</h5>
+                        <p>Owner can pause the sponsor pool and withdraw funds instantly via emergencyWithdraw().</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Step Progress -->
     <div class="steps">
         <div class="step active" id="step1">
@@ -1068,14 +1533,14 @@
             <div class="footer-col">
                 <h4>Product</h4>
                 <a href="#features">Features</a>
-                <a href="#how-it-works">Documentation</a>
-                <a href="#">GitHub</a>
+                <a href="#how-it-works">Architecture</a>
+                <a href="https://github.com/amritanshuroy28/batch-relay-dapp" target="_blank">GitHub</a>
             </div>
             <div class="footer-col">
                 <h4>Resources</h4>
-                <a href="#">Contracts</a>
-                <a href="#">Audit</a>
-                <a href="#">FAQ</a>
+                <a href="https://github.com/amritanshuroy28/batch-relay-dapp/blob/main/ARCHITECTURE.md" target="_blank">Architecture Doc</a>
+                <a href="https://eips.ethereum.org/EIPS/eip-712" target="_blank">EIP-712 Spec</a>
+                <a href="https://eips.ethereum.org/EIPS/eip-2771" target="_blank">ERC-2771 Spec</a>
             </div>
             <div class="footer-col">
                 <h4>Network</h4>
@@ -1091,8 +1556,8 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>Made with ❤️ for the Web3 community. Sepolia Testnet Version.</p>
-            <p style="margin-top: 0.5rem; color: var(--text-muted);">© 2024 Gas Optimizer. All rights reserved.</p>
+            <p>Built for Web3Assam Hackathon — Gas Fee Optimizer & Batch Transaction System</p>
+            <p style="margin-top: 0.5rem; color: var(--text-muted);">© 2026 Gas Optimizer — Batch & Relay Engine. Sepolia Testnet.</p>
         </div>
     </footer>
 </div>

@@ -3,14 +3,36 @@ pragma solidity ^0.8.20;
 
 /**
  * @title BatchExecutor
- * @notice Executes batched meta-transactions with signature verification
- *         and replay protection.
+ * @author Gas Fee Optimizer — Batch Transaction System
+ * @notice Executes batched meta-transactions with EIP-712 signature verification
+ *         and nonce-based replay protection.
  *
- * HOW IT WORKS:
- * 1. Users sign "requests" off-chain (target contract, function data, nonce)
- * 2. A relayer collects these signed requests
- * 3. Relayer calls executeBatch() with all requests + signatures
- * 4. This contract verifies each signature, checks nonces, and executes
+ * @dev This contract implements the Trusted Forwarder pattern (inspired by ERC-2771)
+ *      combined with transaction batching for gas optimization.
+ *
+ * ARCHITECTURE:
+ *   The system achieves gas savings by amortizing the 21,000 base transaction cost
+ *   across N operations. For N token transfers:
+ *     - Individual cost:  N × (21,000 + C_exec) gas
+ *     - Batched cost:     21,000 + N × (C_exec + C_overhead) gas
+ *     - Savings:          (N-1) × 21,000 - N × C_overhead gas
+ *
+ *   Where C_overhead ≈ 5,000 gas (signature verification + nonce check + loop)
+ *   yields ~60-70% savings for batch sizes of 5-20.
+ *
+ * FLOW:
+ *   1. Users sign ForwardRequest structs off-chain via EIP-712 (no gas cost)
+ *   2. A relayer collects signed requests into a queue
+ *   3. Relayer calls executeBatch() with all requests + signatures in one TX
+ *   4. This contract verifies each signature, checks nonces, and executes
+ *   5. Original sender identity is propagated to target contracts via calldata appending
+ *
+ * SECURITY MODEL:
+ *   - EIP-712 domain separator binds signatures to this contract on this chain
+ *   - Sequential nonces prevent replay attacks
+ *   - Nonce incremented before execution prevents reentrancy-based reuse
+ *   - Gas limits per sub-call prevent griefing attacks
+ *   - Users can bypass the relayer and call executeBatch() directly
  */
 contract BatchExecutor {
 
