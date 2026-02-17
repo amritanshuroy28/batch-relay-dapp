@@ -453,9 +453,3 @@ newdApp/
 5. [OpenZeppelin MinimalForwarder](https://docs.openzeppelin.com/contracts/4.x/api/metatx)
 6. [Gas Station Network (GSN)](https://docs.opengsn.org/)
 7. [Ethereum Yellow Paper — Transaction Execution](https://ethereum.github.io/yellowpaper/paper.pdf)
-
----
-
-## License
-
-MIT
